@@ -136,6 +136,7 @@ export const updateUser = async (req, res) => {
         dateofbirth,
         gender,
         about,
+        role,
       } = req.body;
 
       const userData = await userModel.findOne({ _id: userID });
@@ -165,6 +166,7 @@ export const updateUser = async (req, res) => {
             gender: gender,
             about: about,
             avatar: avatar,
+            role:role
           },
         }
       );
@@ -226,10 +228,7 @@ export const signUp = async (req, res) => {
           msg: "User Already Exists.",
         });
       }
-      let otp = otpGenerator.generate(6, {
-        upperCaseAlphabets: false,
-        specialChars: false,
-      });
+      
 
       const hashPassword = bcrypt.hashSync(password, 10);
       const userData = new userModel({
@@ -261,7 +260,7 @@ export const signUp = async (req, res) => {
 
 export const signIn = async (req, res) => {
   try {
-    const { email, password, otp } = req.body;
+    const { email, password  } = req.body;
 
     const existUser = await userModel.findOne({ email: email });
     if (!existUser) {
@@ -276,14 +275,8 @@ export const signIn = async (req, res) => {
         message: "Invalid Credientials!",
       });
     }
-    const loginOTP = Math.floor(Math.random() * 1000);
-    console.log("Number:" + loginOTP );
+    
 
-    if (otp !== loginOTP.toString()) {
-      return res.status(400).json({
-        message: "Invalid OTP!",
-      });
-    }
 
     const token = jwt.sign(
       {
@@ -299,8 +292,62 @@ export const signIn = async (req, res) => {
 
     return res.status(200).json({
       data: existUser,
+      success:true,
       token: token,
       message: "Login Successful!",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+export const adminSignIn = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Find the user with the provided email
+    const user = await userModel.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({
+        message: "User Does Not Exist!",
+      });
+    }
+
+    // Check if the user has admin privileges (role === 'admin')
+    if (user.role !== 'admin') {
+      return res.status(403).json({
+        message: "Access denied. Admin privileges required.",
+      });
+    }
+
+    // Compare the provided password with the stored hash
+    const passwordCompare = await bcrypt.compare(password, user.password);
+
+    if (!passwordCompare) {
+      return res.status(400).json({
+        message: "Invalid Credentials!",
+      });
+    }
+
+    // Generate a JWT token for the admin
+    const token = jwt.sign(
+      {
+        id: user._id,
+        email: user.email,
+        role: user.role, // Include the role in the token payload
+      },
+      "mysecretkey",
+      { expiresIn: "1h" }
+    );
+
+    return res.status(200).json({
+      data: user,
+      token: token,
+      success:true,
+      message: "Admin Login Successful!",
     });
   } catch (error) {
     return res.status(500).json({

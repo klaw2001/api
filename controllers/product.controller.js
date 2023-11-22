@@ -138,7 +138,7 @@ export const addProduct = (req, res) => {
 export const getSingleProduct = async (req, res) => {
   try {
     const productID = req.params.product_id;
-    const productData = await productModel.findOne({ _id: productID });
+    const productData = await productModel.findOne({ _id: productID }).populate('category').populate("subcategory");
 
     if (productData) {
       return res.status(200).json({
@@ -219,7 +219,7 @@ export const updateProduct = async (req, res) => {
       }
 
       if (updatedData) {
-        return res.status(201).json({
+        return res.status(200).json({
           data: updatedData,
           message: "Product Updated Successfully",
         });
@@ -269,3 +269,4 @@ export const deleteProduct = async(req,res) =>{
     });
   }
 }
+

@@ -25,7 +25,7 @@ const UserSchema = new Schema({
     },
     dateofbirth:{
         type:Date,
-        required:true
+        required:false
     },
     gender:{
         type: String,
@@ -40,6 +40,11 @@ const UserSchema = new Schema({
         type:String,
         default:null
     },
+    role: {
+        type: String,
+        enum: ['user', 'admin'], 
+        default: 'user', 
+      },
     // status:{
     //     type:Number,
     //     required:true

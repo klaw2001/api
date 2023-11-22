@@ -154,6 +154,59 @@ export const updateSubCategory = async (req,res)=>{
     }
 }
 
+
+
+export const updateSub_category = async (req, res) => {
+  try {
+    const imageUplaod = upload.single("image");
+    imageUplaod(req, res, async function (err) {
+      if (err) return res.status(500).json({ Message: err.message });
+
+      const id = req.params.subCategory_id;
+
+      const { Name, CategoryID } = req.body;
+      console.log(req.body);
+
+      const subcategoryData = await sub_CategoryModel.findOne({
+        _id: id,
+      });
+      let image = subcategoryData.image;
+
+      if (req.file !== undefined) {
+        if (image && fs.existsSync("./uploads/subCategory/" + image)) {
+          fs.unlinkSync("./uploads/subCategory/" + image);
+        }
+        image = req.file.filename;
+      }
+
+      console.log(image);
+
+      const updateSubCategory = await sub_CategoryModel.updateOne(
+        { _id: id },
+        {
+          $set: {
+            Name,
+            CategoryID,
+            image,
+          },
+        }
+      );
+
+      if (updateSubCategory.acknowledged) {
+        return res.status(200).json({
+          Data: updateSubCategory,
+          Message: "Updated SucessFully",
+        });
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({
+      Message: error.message,
+    });
+  }
+};
+
+
 export const deleteSubCategory = async (req,res) =>{
     const subcategoryID = req.params.subcategory_id;
     const subcategory = await subcategoryModel.findOne({_id:subcategoryID})
